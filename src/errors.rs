@@ -31,7 +31,7 @@ pub enum RequestError {
     NotJSON,
     NoUTF8,
     NetworkError,
-    SerializeError,
+    SerializeError(String),
     NotFoundOrNullBody,
 }
 
@@ -43,7 +43,7 @@ impl Display for RequestError {
             RequestError::NotJSON => write!(f, "Invalid JSON"),
             RequestError::NoUTF8 => write!(f, "Utf8 error"),
             RequestError::NetworkError => write!(f, "Network error"),
-            RequestError::SerializeError => write!(f, "Serialize error"),
+            RequestError::SerializeError(message) => write!(f, "Serialize error: {message}"),
             RequestError::NotFoundOrNullBody => write!(f, "Body is null or record is not found"),
         }
     }

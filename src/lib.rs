@@ -161,7 +161,10 @@ impl Firebase {
             Method::GET => client.get(self.uri.to_string()).send().await,
             Method::PUT | Method::PATCH | Method::POST => {
                 if data.is_none() {
-                    return Err(RequestError::SerializeError);
+                    return Err(RequestError::SerializeError(format!(
+                        "missing `data` in {:?} request",
+                        method
+                    )));
                 }
                 let builder = if method == Method::PUT {
                     client.put(self.uri.to_string())
@@ -182,7 +185,9 @@ impl Firebase {
                     if response_text == "null" {
                         Err(RequestError::NotFoundOrNullBody)
                     } else {
-                        Ok(Response { data: response_text })
+                        Ok(Response {
+                            data: response_text,
+                        })
                     }
                 }
                 _ => Err(RequestError::NetworkError),
@@ -195,16 +200,9 @@ impl Firebase {
     where
         T: Serialize + DeserializeOwned + Debug,
     {
-        let request = self.request(method, None).await;
-
-        match request {
-            Ok(response) => {
-                let data: T = serde_json::from_str(response.data.as_str()).unwrap();
-
-                Ok(data)
-            }
-            Err(err) => Err(err),
-        }
+        let response = self.request(method, None).await?;
+        serde_json::from_str(response.data.as_str())
+            .map_err(|e| RequestError::SerializeError(e.to_string()))
     }
 
     /// ```rust
