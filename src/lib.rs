@@ -173,7 +173,9 @@ impl Firebase {
             }
             Method::POST => {
                 if !data.is_some() {
-                    return Err(RequestError::SerializeError);
+                    return Err(RequestError::SerializeError(
+                        "missing `data` to POST".to_string(),
+                    ));
                 }
 
                 let request = client.post(self.uri.to_string()).json(&data).send().await;
@@ -187,7 +189,9 @@ impl Firebase {
             }
             Method::PATCH => {
                 if !data.is_some() {
-                    return Err(RequestError::SerializeError);
+                    return Err(RequestError::SerializeError(
+                        "missing `data` to PATCH".to_string(),
+                    ));
                 }
 
                 let request = client.patch(self.uri.to_string()).json(&data).send().await;
@@ -215,16 +219,9 @@ impl Firebase {
     where
         T: Serialize + DeserializeOwned + Debug,
     {
-        let request = self.request(method, None).await;
-
-        match request {
-            Ok(response) => {
-                let data: T = serde_json::from_str(response.data.as_str()).unwrap();
-
-                Ok(data)
-            }
-            Err(err) => Err(err),
-        }
+        let response = self.request(method, None).await?;
+        serde_json::from_str(response.data.as_str())
+            .map_err(|e| RequestError::SerializeError(e.to_string()))
     }
 
     /// ```rust
