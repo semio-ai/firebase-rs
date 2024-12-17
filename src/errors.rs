@@ -30,7 +30,7 @@ pub type RequestResult<T> = Result<T, RequestError>;
 pub enum RequestError {
     NotJSON,
     NoUTF8,
-    NetworkError,
+    NetworkError(String),
     SerializeError(String),
     NotFoundOrNullBody,
 }
@@ -42,7 +42,7 @@ impl Display for RequestError {
         match self {
             RequestError::NotJSON => write!(f, "Invalid JSON"),
             RequestError::NoUTF8 => write!(f, "Utf8 error"),
-            RequestError::NetworkError => write!(f, "Network error"),
+            RequestError::NetworkError(message) => write!(f, "Network error: {message}"),
             RequestError::SerializeError(message) => write!(f, "Serialize error: {message}"),
             RequestError::NotFoundOrNullBody => write!(f, "Body is null or record is not found"),
         }

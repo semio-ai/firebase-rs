@@ -175,7 +175,12 @@ impl Firebase {
                 };
                 builder.json(&data).send().await
             }
-            Method::DELETE => client.delete(self.uri.to_string()).send().await,
+            Method::DELETE => {
+                client
+                    .delete(format!("{}.json", self.uri.to_string()))
+                    .send()
+                    .await
+            }
         };
 
         match request {
@@ -190,9 +195,11 @@ impl Firebase {
                         })
                     }
                 }
-                _ => Err(RequestError::NetworkError),
+                status_code => Err(RequestError::NetworkError(format!(
+                    "Unexpected status code in response: {status_code}"
+                ))),
             },
-            Err(_) => Err(RequestError::NetworkError),
+            Err(e) => Err(RequestError::NetworkError(format!("Request failed: {e}"))),
         }
     }
 
